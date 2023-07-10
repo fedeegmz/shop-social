@@ -1,10 +1,9 @@
 # FastAPI
 from fastapi import APIRouter, Path, Body
 from fastapi import HTTPException, status
-from fastapi.encoders import jsonable_encoder
 
 # database
-from database.mongo_client import db_client
+from database.mongo_client import MongoDB
 
 # models
 from models.user import User, UserDb
@@ -14,6 +13,8 @@ from util.auth import get_password_hash
 from util.verify import verify_username
 
 
+db_client = MongoDB()
+
 router = APIRouter(
     prefix = "/users"
 )
@@ -22,7 +23,7 @@ router = APIRouter(
 @router.get(
     path = "/",
     status_code = status.HTTP_200_OK,
-    tags = ["users"],
+    tags = ["Users"],
     summary = "Get all users"
 )
 async def get_users():
@@ -45,7 +46,7 @@ async def get_users():
 @router.get(
     path = "/{username}",
     status_code = status.HTTP_200_OK,
-    tags = ["users"],
+    tags = ["Users"],
     summary = "Get a user"
 )
 async def get_user(
@@ -64,7 +65,7 @@ async def get_user(
 @router.post(
     path = "/signup",
     status_code = status.HTTP_201_CREATED,
-    tags = ["users"],
+    tags = ["Users"],
     summary = "Insert a user"
 )
 async def create_user(

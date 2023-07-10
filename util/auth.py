@@ -15,7 +15,7 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 
 # db
-from database.mongo_client import db_client
+from database.mongo_client import MongoDB
 
 # models
 from models.user import User, UserDb
@@ -31,6 +31,8 @@ pwd_context = CryptContext(
     schemes = ["bcrypt"],
     deprecated = "auto"
     )
+
+db_client = MongoDB()
 
 
 def verify_password(plain_password: str, hashed_password: str):

@@ -1,5 +1,8 @@
 # database
-from database.mongo_client import db_client
+from database.mongo_client import MongoDB
+
+
+db_client = MongoDB()
 
 
 def get_white_list_usernames():
@@ -24,7 +27,7 @@ def get_white_list_name_shops():
     
     return to_return
 
-def get_white_list_product_id_in_shop(product_id: str, shop_name: str):
+def get_white_list_product_id_in_shop(shop_name: str):
     to_return = []
     shop_name = shop_name.lower()
     products = db_client.products_db.find(
@@ -36,6 +39,6 @@ def get_white_list_product_id_in_shop(product_id: str, shop_name: str):
     if not products:
         return []
     for product in products:
-        to_return.append(product.get("_id"))
+        to_return.append(str(product.get("_id")))
     
     return to_return

@@ -1,8 +1,11 @@
+from bson import ObjectId
 from typing import Optional
 from pydantic import BaseModel, Field
 
 
 class Product(BaseModel):
+    # _id: ObjectId = Field(default_factory=lambda x: ObjectId(x))
+    _id: ObjectId = Field(...)
     title: str = Field(...)
     price: float = Field(...)
     stock: int = Field(...)

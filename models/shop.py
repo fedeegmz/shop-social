@@ -1,4 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
+
+# models
+from models.product import Product
 
 
 class Shop(BaseModel):
@@ -6,3 +9,6 @@ class Shop(BaseModel):
     description: str = Field()
     icon: str = Field()
     owner_username: str = Field(default=None)
+
+class ShopAll(Shop):
+    products: list[Product] = Field()

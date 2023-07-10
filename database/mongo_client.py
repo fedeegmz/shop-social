@@ -16,10 +16,6 @@ from pymongo import MongoClient
 # from models.user import User
 
 
-is_test_db = os.getenv("IS_TEST_DB")
-if not is_test_db:
-    is_test_db = None
-
 class MongoDB:
     """
     The MongoDB class is a Python class that provides methods for interacting with a MongoDB database.
@@ -33,16 +29,13 @@ class MongoDB:
     as well as possible exceptions that may be thrown during the execution of the methods.
     """
 
-    def __init__(self, test: bool = False) -> None:
+    def __init__(self) -> None:
         """
         Initializes a MongoDB instance.
-
-        Parameters:
-            - test (bool, optional): A boolean indicating whether the MongoDB instance
-            is for testing purposes. Defaults to False.
         """
         username = os.getenv("SHOP_SOCIAL_DB_USER")
         password = os.getenv("SHOP_SOCIAL_DB_PASSW")
+        test = os.getenv("IS_TEST_DB", None)
 
         atlas_url = f'mongodb+srv://{username}:{password}@main.v5svgs3.mongodb.net/?retryWrites=true&w=majority'
         
@@ -54,6 +47,3 @@ class MongoDB:
         self.users_db = self.__db_client.users
         self.shops_db = self.__db_client.shops
         self.products_db = self.__db_client.products
-
-
-db_client = MongoDB(is_test_db)

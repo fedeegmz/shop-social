@@ -2,14 +2,17 @@
 from fastapi import HTTPException, status
 
 # database
-from database.mongo_client import db_client
+from database.mongo_client import MongoDB
 
 # models
-from models.user import User
 from models.shop import Shop
 
 # util
 from util.white_lists import get_white_list_usernames, get_white_list_name_shops, get_white_list_product_id_in_shop
+
+
+db_client = MongoDB()
+
 
 def verify_username(username: str):
     if not username.lower() in get_white_list_usernames():
@@ -30,10 +33,9 @@ def verify_shop_name(shop_name: str):
         )
 
 def verify_product_id_in_shop(product_id: str, shop_name: str):
-    shop_name = shop_name.lower()
     verify_shop_name(shop_name)
 
-    if not product_id in get_white_list_product_id_in_shop(product_id, shop_name):
+    if not product_id in get_white_list_product_id_in_shop(shop_name):
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,
             detail = {
