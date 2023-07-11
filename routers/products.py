@@ -12,6 +12,7 @@ from models.user import User
 from models.shop import Shop
 from models.product import Product, ProductDb
 from models.cart import Cart
+from models.ticket import Ticket
 
 # util
 from util.auth import get_current_user
@@ -158,13 +159,50 @@ async def add_product_to_cart(
         cart.total += product_.price
     product.stock -= 1
 
-    db_client.products_db.update_one(
-        {
-            "_id": ObjectId(product_id)
-        },
-        {
-            "$set": {"stock": {"$inc": -1}}
-        }
+    return cart
+
+@router.post(
+    path = "/buy",
+    status_code = status.HTTP_200_OK,
+    tags = ["Products"],
+    summary = "Buy a cart",
+    # response_model = Ticket
+)
+async def buy_cart(
+    cart_to_buy: Cart = Body(...)
+):
+    message = f''
+    if not isinstance(cart_to_buy, Cart):
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail = {
+                "errmsg": "Incorrect cart"
+            }
+        )
+    
+    for product in cart_to_buy.products:
+        if product.stock == 0:
+            cart_to_buy.total -= product.price
+            message += f'{product.title} deleted because doesn\'t have stock, '
+            del product
+            continue
+    
+        db_client.products_db.update_one(
+            {
+                "_id": ObjectId(product._id)
+            },
+            {
+                "$set": {"stock": {"$inc": -1}}
+            }
+        )
+
+    ticket = Ticket(
+        type = "sale",
+        items = cart_to_buy.products,
+        price = cart_to_buy.total
     )
 
-    return cart
+    return {
+        "ticket": ticket,
+        "message": message
+    }
