@@ -1,5 +1,8 @@
+# Python
+from typing import Union
+
 # FastAPI
-from fastapi import APIRouter, Path, Body, Depends
+from fastapi import APIRouter, Path, Query, Body, Depends
 from fastapi import HTTPException, status
 
 # database
@@ -12,7 +15,7 @@ from models.product import Product
 
 # util
 from util.auth import get_current_user
-from util.verify import verify_shop_name
+from util.verify import verify_shop_name, verify_shop_id
 
 
 db_client = MongoDB()
@@ -21,25 +24,42 @@ router = APIRouter(
     prefix = "/shops"
 )
 
+### PATH OPERATIONS ###
+
+## get shops by ID ##
+@router.get(
+    path = "/{id}",
+    status_code = status.HTTP_200_OK,
+    response_model = Shop,
+    tags = ["Shops"],
+    summary = "Get a shop by ID"
+)
+async def get_shop(
+    id: str = Path(...)
+):
+    verify_shop_id()
+
+    shop = db_client.shops_db.find_one({"id": id})
+    shop = Shop(**shop)
+
+    return shop
+
+
+## get shops ##
 @router.get(
     path = "/",
     status_code = status.HTTP_200_OK,
+    response_model = Union[Shop, list],
     tags = ["Shops"],
-    summary = "Get all shops"
+    summary = "Get a shop or shops"
 )
-async def get_shops():
-    shops = db_client.shops_db.find()
-    return [Shop(**shop) for shop in shops]
-
-@router.get(
-    path = "/{shop_name}",
-    status_code = status.HTTP_200_OK,
-    tags = ["Shops"],
-    summary = "Get a shop"
-)
-async def get_shop(
-    shop_name: str = Path(...)
+async def get_shops(
+    shop_name: Union[str, None] = Query(default=None)
 ):
+    if not shop_name:
+        shops = db_client.shops_db.find().limit(25)
+        return [Shop(**shop) for shop in shops]
+
     shop_name = shop_name.lower()
     verify_shop_name(shop_name)
     
@@ -59,9 +79,12 @@ async def get_shop(
     shop_to_return = ShopAll(**shop_to_return)
     return shop_to_return
 
+
+## insert a new shop ##
 @router.post(
     path = "/",
     status_code = status.HTTP_201_CREATED,
+    # response_model = Shop,
     tags = ["Shops"],
     summary = "Insert a shop"
 )
@@ -80,5 +103,6 @@ async def insert_shop(
     data.name = data.name.lower()
     data.owner_username = current_user.username
     db_client.shops_db.insert_one(data.dict())
+    print(data.dict())
 
     return data.dict()

@@ -8,11 +8,21 @@ from database.mongo_client import MongoDB
 from models.shop import Shop
 
 # util
-from util.white_lists import get_white_list_usernames, get_white_list_name_shops, get_white_list_product_id_in_shop
+from util.white_lists import get_white_list_users_id, get_white_list_usernames, get_white_list_product_id_in_shop
+from util.white_lists import get_white_list_shop_id, get_white_list_shop_names
 
 
 db_client = MongoDB()
 
+
+def verify_user_id(id: str):
+    if not id in get_white_list_users_id():
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail = {
+                "errmsg": "Incorrect user ID"
+            }
+        )
 
 def verify_username(username: str):
     if not username.lower() in get_white_list_usernames():
@@ -23,8 +33,17 @@ def verify_username(username: str):
             }
         )
 
+def verify_shop_id(id: str):
+    if not id in get_white_list_shop_id():
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail = {
+                "errmsg": "Incorrect shop ID"
+            }
+        )
+
 def verify_shop_name(shop_name: str):
-    if not shop_name.lower() in get_white_list_name_shops():
+    if not shop_name.lower() in get_white_list_shop_names():
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,
             detail = {

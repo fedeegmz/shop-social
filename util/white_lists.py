@@ -5,27 +5,38 @@ from database.mongo_client import MongoDB
 db_client = MongoDB()
 
 
+def get_white_list_users_id():
+    ids = db_client.users_db.find({}, {"id": 1, "_id": 0})
+    if not ids:
+        return []
+
+    return [data["id"] for data in ids]
+
+
 def get_white_list_usernames():
-    to_return = []
     usernames = db_client.users_db.find({}, {"username": 1, "_id": 0})
-    
     if not usernames:
         return []
-    for username in usernames:
-        to_return.append(username.get("username").lower())
     
-    return to_return
+    return [data["username"].lower() for data in usernames]
 
-def get_white_list_name_shops():
-    to_return = []
+
+def get_white_list_shop_id():
+    ids = db_client.shops_db.find({}, {"id": 1, "_id": 0})
+    if not ids:
+        return []
+
+    return [data["id"] for data in ids]
+
+
+def get_white_list_shop_names():
     names = db_client.shops_db.find({}, {"name": 1, "_id": 0})
 
     if not names:
         return []
-    for name in names:
-        to_return.append(name.get("name").lower())
     
-    return to_return
+    return [data["name"].lower() for data in names]
+
 
 def get_white_list_product_id_in_shop(shop_name: str):
     to_return = []

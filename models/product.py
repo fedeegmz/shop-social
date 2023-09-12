@@ -1,17 +1,19 @@
+# Python
 from bson import ObjectId
-from typing import Optional
+from typing import Union
+
+# Pydantic
 from pydantic import BaseModel, Field
 
 
 class Product(BaseModel):
-    # _id: ObjectId = Field(default_factory=lambda x: ObjectId(x))
-    _id: ObjectId = Field(...)
+    id: str = Field(default_factory=lambda: str(ObjectId()))
     title: str = Field(...)
     price: float = Field(...)
     stock: int = Field(...)
-    description: Optional[str] = Field(default=None)
-    colection: Optional[str] = Field(default=None)
-    img: Optional[str] = Field(default=None)
+    description: Union[str, None] = Field(default=None)
+    colection: Union[str, None] = Field(default=None)
+    img: Union[str, None] = Field(default=None)
 
 class ProductDb(Product):
     shop_name: str = Field(...)
