@@ -10,8 +10,8 @@ from database.mongo_client import MongoDB
 
 # models
 from models.user import User
-from models.shop import Shop, ShopAll
-from models.product import Product
+from models.shop import Shop
+# from models.product import Product
 
 # util
 from util.auth import get_current_user
@@ -26,7 +26,7 @@ router = APIRouter(
 
 ### PATH OPERATIONS ###
 
-## get shops by ID ##
+## get shop by ID ##
 @router.get(
     path = "/{id}",
     status_code = status.HTTP_200_OK,
@@ -40,12 +40,15 @@ async def get_shop(
     verify_shop_id()
 
     shop = db_client.shops_db.find_one({"id": id})
+    if not shop:
+        return None
+    
     shop = Shop(**shop)
 
     return shop
 
 
-## get shops ##
+## get shops or a shop by name ##
 @router.get(
     path = "/",
     status_code = status.HTTP_200_OK,
@@ -63,28 +66,28 @@ async def get_shops(
     shop_name = shop_name.lower()
     verify_shop_name(shop_name)
     
-    shop = db_client.shops_db.find_one({"name": shop_name}, {"_id": 0})
-    products = db_client.products_db.find(
-        {
-            "shop_name": shop_name,
-            "stock": {"$gt": 0}
-        }
-    )
-    print(products[0])
-    products = [Product(**product).dict() for product in products]
-    print(products)
+    shop = db_client.shops_db.find_one({"name": shop_name})
+    if not shop:
+        return None
+    # products = db_client.products_db.find(
+    #     {
+    #         "shop_name": shop_name,
+    #         "stock": {"$gt": 0}
+    #     }
+    # )
+    # products = [Product(**product).dict() for product in products]
+    # shop_to_return = shop
+    # shop_to_return["products"] = products
+    # shop_to_return = ShopAll(**shop_to_return)
+    # return shop_to_return
+    return Shop(**shop)
 
-    shop_to_return = shop
-    shop_to_return["products"] = products
-    shop_to_return = ShopAll(**shop_to_return)
-    return shop_to_return
 
-
-## insert a new shop ##
+## insert a shop ##
 @router.post(
     path = "/",
     status_code = status.HTTP_201_CREATED,
-    # response_model = Shop,
+    response_model = Shop,
     tags = ["Shops"],
     summary = "Insert a shop"
 )
@@ -92,17 +95,17 @@ async def insert_shop(
     data: Shop = Body(...),
     current_user: User = Depends(get_current_user)
 ):
-    if not isinstance(Shop(**data.dict()), Shop):
+    shop = Shop(**data.dict())
+    shop.name = data.name.lower()
+    shop.owner_username = current_user.username
+    
+    returned_data = db_client.shops_db.insert_one(data.dict())
+    if not returned_data.acknowledged:
         raise HTTPException(
-            status_code = status.HTTP_400_BAD_REQUEST,
+            status_code = status.HTTP_409_CONFLICT,
             detail = {
-                "errmsg": "Incorrect shop data"
+                "errmsg": "Shop not inserted"
             }
         )
-    
-    data.name = data.name.lower()
-    data.owner_username = current_user.username
-    db_client.shops_db.insert_one(data.dict())
-    print(data.dict())
 
-    return data.dict()
+    return shop.dict()
