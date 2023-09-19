@@ -47,3 +47,4 @@ class MongoDB:
         self.users_db = self.__db_client.users
         self.shops_db = self.__db_client.shops
         self.products_db = self.__db_client.products
+        self.carts_db = self.__db_client.carts

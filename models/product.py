@@ -16,4 +16,4 @@ class Product(BaseModel):
     img: Union[str, None] = Field(default=None)
 
 class ProductDb(Product):
-    shop_name: str = Field(...)
+    shop_id: str = Field(...)

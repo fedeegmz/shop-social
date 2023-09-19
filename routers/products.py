@@ -1,8 +1,9 @@
 # Python
 from bson import ObjectId
+from typing import Union
 
 # FastAPI
-from fastapi import APIRouter, Path, Body, Depends
+from fastapi import APIRouter, Path, Query, Body, Depends
 from fastapi import HTTPException, status
 
 # database
@@ -15,7 +16,7 @@ from models.product import Product, ProductDb
 
 # util
 from util.auth import get_current_user
-from util.verify import verify_shop_name, verify_product_id_in_shop, verify_owner_of_shop
+from util.verify import verify_shop_id, verify_product_id_in_shop, verify_owner_of_shop
 
 
 db_client = MongoDB()
@@ -26,88 +27,104 @@ router = APIRouter(
 
 ### PATH OPERATIONS ###
 
+## get products ##
+@router.get(
+    path = "/{shop_id}/",
+    status_code = status.HTTP_200_OK,
+    tags = ["Products"],
+    summary = "Get a product in a shop"
+)
+async def get_products(
+    shop_id: str = Path(...),
+    product_name: Union[str, None] = Query(default=None)
+):
+    verify_shop_id(shop_id)
+    if not product_name:
+        products = db_client.products_db.find().limit(25)
+
+        return [Product(**data) for data in products]
+    
+    return {
+        "error": "Is not possible search a product by name (for now)"
+    }
+
+
 ## get product ##
 @router.get(
-    path = "/{shop_name}/{product_id}",
+    path = "/{shop_id}/{product_id}",
     status_code = status.HTTP_200_OK,
     tags = ["Products"],
     summary = "Get a product in a shop"
 )
 async def get_product(
-    shop_name: str = Path(...),
+    shop_id: str = Path(...),
     product_id: str = Path(...)
 ):
-    verify_shop_name(shop_name)
-    verify_product_id_in_shop(product_id, shop_name)
+    verify_shop_id(shop_id)
+    verify_product_id_in_shop(product_id, shop_id)
 
-    product = db_client.products_db.find_one({"_id": ObjectId(product_id)})
+    product = db_client.products_db.find_one({"id": product_id})
     product = Product(**product)
 
     return product
 
+
+## insert product ##
 @router.post(
-    path = "/{shop_name}/insert-product",
+    path = "/{shop_id}/insert-product",
     status_code = status.HTTP_201_CREATED,
     tags = ["Products"],
     summary = "Insert a product in a shop"
 )
 async def insert_product_in_shop(
-    shop_name: str = Path(...),
+    shop_id: str = Path(...),
     data: Product = Body(...),
     current_user: User = Depends(get_current_user)
 ):
-    verify_shop_name(shop_name)
-    if not isinstance(Product(**data.dict()), Product):
+    verify_shop_id(shop_id)
+    verify_owner_of_shop(shop_id, current_user.username)
+    
+    product = data.dict()
+    product["shop_id"] = shop_id
+    product = ProductDb(**product)
+
+    returned_data = db_client.products_db.insert_one(product.dict())
+    if not returned_data.acknowledged:
         raise HTTPException(
-            status_code = status.HTTP_400_BAD_REQUEST,
+            status_code = status.HTTP_409_CONFLICT,
             detail = {
-                "errmsg": "Incorrect product"
+                "errmsg": "Product was not inserted"
             }
         )
     
-    shop = db_client.shops_db.find_one({"name": shop_name})
-    shop = Shop(**shop)
+    # product_to_return = db_client.products_db.find_one(
+    #     {"_id": ObjectId(returned_data.inserted_id)}
+    # )
+    # return Product(**product_to_return)
+    return product
 
-    verify_owner_of_shop(shop, current_user.username)
-    
-    product = data.dict()
-    product["shop_name"] = shop.name
-    product = ProductDb(**product)
 
-    inserted_id = db_client.products_db.insert_one(product.dict()).inserted_id
-    product_to_return = db_client.products_db.find_one({"_id": ObjectId(inserted_id)})
-
-    return Product(**product_to_return)
-
+## update stock of product ##
 @router.post(
-    path = "/{shop_name}/{product_id}/update-stock/{stock}",
+    path = "/{shop_id}/{product_id}/update-stock/{stock}",
     status_code = status.HTTP_200_OK,
     tags = ["Products"],
     summary = "Set the stock of a product in a shop"
 )
 async def set_stock_of_product(
-    shop_name: str = Path(...),
+    shop_id: str = Path(...),
     product_id: str = Path(...),
-    stock: int = Path(...),
+    stock: int = Path(..., gt=0),
     current_user: User = Depends(get_current_user)
 ):
-    verify_shop_name(shop_name)
-    verify_product_id_in_shop(product_id, shop_name)
-    shop = db_client.shops_db.find({"name": shop_name})
-    shop = Shop(**shop)
-    verify_owner_of_shop(shop, current_user)
-    if not isinstance(stock, int):
-        raise HTTPException(
-            status_code = status.HTTP_401_UNAUTHORIZED,
-            detail = {
-                "errmsg": "Incorrect number of stock"
-            }
-        )
+    verify_shop_id(shop_id)
+    verify_product_id_in_shop(product_id, shop_id)
+    verify_owner_of_shop(shop_id, current_user)
 
     product = db_client.products_db.__find_and_modify(
         {
             "query": {
-                "_id": ObjectId(product_id)
+                "id": product_id
             },
             "update": {
                 "$set": {"stock": stock}

@@ -38,18 +38,24 @@ def get_white_list_shop_names():
     return [data["name"].lower() for data in names]
 
 
-def get_white_list_product_id_in_shop(shop_name: str):
-    to_return = []
-    shop_name = shop_name.lower()
+def get_white_list_product_id_in_shop(shop_id: str):
     products = db_client.products_db.find(
         {
-            "shop_name": shop_name
+            "shop_id": shop_id
         }
     )
 
     if not products:
         return []
-    for product in products:
-        to_return.append(str(product.get("_id")))
-    
-    return to_return
+    return [data["id"] for data in products]
+
+def get_white_list_cart_id(cart_id: str):
+    carts = db_client.carts_db.find(
+        {},
+        {
+            "id": 1,
+            "_id": 0
+        }
+    )
+
+    return [data["id"] for data in carts]

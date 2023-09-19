@@ -1,5 +1,6 @@
 # Python
 from bson import ObjectId
+from typing import Union
 
 # Pydantic
 from pydantic import BaseModel, Field
@@ -11,6 +12,6 @@ from models.product import Product
 
 class Cart(BaseModel):
     id: str = Field(default_factory=lambda: str(ObjectId()))
-    owner_id: str = Field(...)
-    products: list[Product] = Field(default=[])
-    total: float = Field()
+    user_id: str = Field(...)
+    products: Union[list[Product], list] = Field(default=[])
+    total: float = Field(default=0)
