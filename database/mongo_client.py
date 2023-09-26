@@ -48,3 +48,4 @@ class MongoDB:
         self.shops_db = self.__db_client.shops
         self.products_db = self.__db_client.products
         self.carts_db = self.__db_client.carts
+        self.tickets_db = self.__db_client.tickets

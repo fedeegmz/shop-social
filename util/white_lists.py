@@ -35,7 +35,7 @@ def get_white_list_shop_names():
     if not names:
         return []
     
-    return [data["name"].lower() for data in names]
+    return [data["name"] for data in names]
 
 
 def get_white_list_product_id_in_shop(shop_id: str):

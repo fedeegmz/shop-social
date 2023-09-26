@@ -8,12 +8,25 @@ from pydantic import BaseModel, Field
 
 class Product(BaseModel):
     id: str = Field(default_factory=lambda: str(ObjectId()))
-    title: str = Field(...)
+    name: str = Field(...)
     price: float = Field(...)
     stock: int = Field(...)
     description: Union[str, None] = Field(default=None)
-    colection: Union[str, None] = Field(default=None)
+    collection: Union[str, None] = Field(default=None)
     img: Union[str, None] = Field(default=None)
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": str(ObjectId()),
+                "name": "Arc reactor",
+                "price": 28.5,
+                "stock": 4,
+                "description": "A replica of the arc reactor",
+                "collection": "Home & Deco",
+                "img": None
+            }
+        }
+
 class ProductDb(Product):
-    shop_id: str = Field(...)
+    shop_id: Union[str, None] = Field(default=None)

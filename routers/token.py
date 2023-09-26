@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 # auth
-from util.auth import create_access_token, authenticate_user, get_current_user
+from util.auth import create_access_token, authenticate_user
 
 # models
 from models.user import User
@@ -50,13 +50,3 @@ async def login_for_access_token(
         "token_type": "bearer"
     }
 
-
-@router.get(
-    path = "/users/me",
-    response_model = User,
-    tags = ["Token"]
-)
-async def read_users_me(
-    current_user: User = Depends(get_current_user)
-):
-    return current_user

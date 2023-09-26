@@ -13,5 +13,5 @@ from models.product import Product
 class Cart(BaseModel):
     id: str = Field(default_factory=lambda: str(ObjectId()))
     user_id: str = Field(...)
-    products: Union[list[Product], list] = Field(default=[])
+    products: Union[list[str], list] = Field(default=[])
     total: float = Field(default=0)

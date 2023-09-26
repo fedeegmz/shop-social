@@ -35,3 +35,17 @@ class UserIn(UserDb):
         min_length = 8,
         max_length = 64
     )
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": str(ObjectId()),
+                "username": "ironman",
+                "name": "Anthony",
+                "lastname": "Stark",
+                "disabled": False,
+                "created": str(date.today()),
+                "is_superuser": False,
+                "password": "ilovemark40"
+            }
+        }

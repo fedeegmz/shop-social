@@ -11,7 +11,7 @@ from database.mongo_client import MongoDB
 
 # models
 from models.user import User
-from models.shop import Shop
+# from models.shop import Shop
 from models.product import Product, ProductDb
 
 # util
@@ -31,8 +31,9 @@ router = APIRouter(
 @router.get(
     path = "/{shop_id}/",
     status_code = status.HTTP_200_OK,
+    # response_model = list,
     tags = ["Products"],
-    summary = "Get a product in a shop"
+    summary = "Get products in a shop"
 )
 async def get_products(
     shop_id: str = Path(...),
@@ -44,15 +45,15 @@ async def get_products(
 
         return [Product(**data) for data in products]
     
-    return {
-        "error": "Is not possible search a product by name (for now)"
-    }
+    products = db_client.products_db.find({"name": product_name})
+    return [ProductDb(**item) for item in products]
 
 
 ## get product ##
 @router.get(
     path = "/{shop_id}/{product_id}",
     status_code = status.HTTP_200_OK,
+    # response_model = Product,
     tags = ["Products"],
     summary = "Get a product in a shop"
 )
@@ -60,7 +61,6 @@ async def get_product(
     shop_id: str = Path(...),
     product_id: str = Path(...)
 ):
-    verify_shop_id(shop_id)
     verify_product_id_in_shop(product_id, shop_id)
 
     product = db_client.products_db.find_one({"id": product_id})
@@ -71,7 +71,7 @@ async def get_product(
 
 ## insert product ##
 @router.post(
-    path = "/{shop_id}/insert-product",
+    path = "/register/{shop_id}",
     status_code = status.HTTP_201_CREATED,
     tags = ["Products"],
     summary = "Insert a product in a shop"
@@ -81,12 +81,10 @@ async def insert_product_in_shop(
     data: Product = Body(...),
     current_user: User = Depends(get_current_user)
 ):
-    verify_shop_id(shop_id)
-    verify_owner_of_shop(shop_id, current_user.username)
+    verify_owner_of_shop(shop_id, current_user.id)
     
-    product = data.dict()
-    product["shop_id"] = shop_id
-    product = ProductDb(**product)
+    product = ProductDb(**data.dict())
+    product.shop_id = shop_id
 
     returned_data = db_client.products_db.insert_one(product.dict())
     if not returned_data.acknowledged:
@@ -97,15 +95,14 @@ async def insert_product_in_shop(
             }
         )
     
-    # product_to_return = db_client.products_db.find_one(
-    #     {"_id": ObjectId(returned_data.inserted_id)}
-    # )
-    # return Product(**product_to_return)
-    return product
+    product_to_return = db_client.products_db.find_one(
+        {"_id": returned_data.inserted_id}
+    )
+    return ProductDb(**product_to_return)
 
 
 ## update stock of product ##
-@router.post(
+@router.patch(
     path = "/{shop_id}/{product_id}/update-stock/{stock}",
     status_code = status.HTTP_200_OK,
     tags = ["Products"],
@@ -117,20 +114,20 @@ async def set_stock_of_product(
     stock: int = Path(..., gt=0),
     current_user: User = Depends(get_current_user)
 ):
-    verify_shop_id(shop_id)
     verify_product_id_in_shop(product_id, shop_id)
-    verify_owner_of_shop(shop_id, current_user)
+    verify_owner_of_shop(shop_id, current_user.id)
 
-    product = db_client.products_db.__find_and_modify(
-        {
-            "query": {
-                "id": product_id
-            },
-            "update": {
-                "$set": {"stock": stock}
-            },
-            "new": True
-        }
+    returned_data = db_client.products_db.update_one(
+        {"id": product_id},
+        {"$set": {"stock": stock}}
     )
+    if not returned_data.acknowledged:
+        raise HTTPException(
+            status_code = status.HTTP_409_CONFLICT,
+            detail = {
+                "errmsg": "Product was not updated"
+            }
+        )
 
-    return product
+    product_to_return = db_client.products_db.find_one({"id": product_id})
+    return ProductDb(**product_to_return)

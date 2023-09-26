@@ -2,17 +2,17 @@
 from typing import Union
 
 # FastAPI
-from fastapi import APIRouter, Path, Query, Body
+from fastapi import APIRouter, Path, Query, Body, Depends
 from fastapi import HTTPException, status
 
 # database
 from database.mongo_client import MongoDB
 
 # models
-from models.user import User, UserDb
+from models.user import User, UserDb, UserIn
 
 # util
-from util.auth import get_password_hash
+from util.auth import get_password_hash, get_current_user
 from util.verify import verify_username, verify_user_id
 from util.white_lists import get_white_list_usernames
 
@@ -35,9 +35,9 @@ router = APIRouter(
     summary = "Get a user by ID"
 )
 async def get_user(
-    id: Path(...)
+    id: str = Path(...)
 ):
-    verify_user_id()
+    verify_user_id(id)
 
     user = db_client.users_db.find_one({"id": id})
     if not user:
@@ -52,7 +52,7 @@ async def get_user(
 @router.get(
     path = "/",
     status_code = status.HTTP_200_OK,
-    response_model = Union[UserDb, list],
+    # response_model = Union[UserDb, list],
     tags = ["Users"],
     summary = "Get a user or users"
 )
@@ -76,6 +76,20 @@ async def get_users(
     return user
 
 
+## get my info ##
+@router.get(
+    path = "/users/me",
+    status_code = status.HTTP_200_OK,
+    response_model = User,
+    tags = ["Users"],
+    summary = "Get my info"
+)
+async def read_users_me(
+    current_user: User = Depends(get_current_user)
+):
+    return current_user
+
+
 ## register a user ##
 @router.post(
     path = "/register",
@@ -85,17 +99,9 @@ async def get_users(
     summary = "Insert a user"
 )
 async def create_user(
-    data: User = Body(...)
-):
-    if not isinstance(data, User):
-        raise HTTPException(
-            status_code = status.HTTP_400_BAD_REQUEST,
-            detail = {
-                "errmsg": "Incorrect user"
-            }
-        )
-    
-    if data.username in get_white_list_usernames:
+    data: UserIn = Body(...)
+):  
+    if data.username in get_white_list_usernames():
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,
             detail = {
@@ -103,12 +109,9 @@ async def create_user(
             }
         )
     
-    try:
-        user = UserDb(**data.dict())
-        user.password = get_password_hash(user.password)
-        inserted_id = db_client.users_db.insert_one(user.dict())
-
-    except:
+    data.password = get_password_hash(data.password)
+    returned_data = db_client.users_db.insert_one(data.dict())
+    if not returned_data.acknowledged:
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,
             detail = {
@@ -116,7 +119,7 @@ async def create_user(
             }
         )
     
-    inserted_user = db_client.users_db.find_one({"id": user.id})
+    inserted_user = db_client.users_db.find_one({"id": data.id})
     inserted_user = UserDb(**inserted_user)
 
     return inserted_user

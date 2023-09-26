@@ -10,12 +10,13 @@ from database.mongo_client import MongoDB
 
 # models
 from models.user import User
-from models.shop import Shop
+from models.shop import BaseShop, Shop
 # from models.product import Product
 
 # util
 from util.auth import get_current_user
 from util.verify import verify_shop_name, verify_shop_id
+from util.white_lists import get_white_list_shop_names
 
 
 db_client = MongoDB()
@@ -37,12 +38,9 @@ router = APIRouter(
 async def get_shop(
     id: str = Path(...)
 ):
-    verify_shop_id()
+    verify_shop_id(id)
 
     shop = db_client.shops_db.find_one({"id": id})
-    if not shop:
-        return None
-    
     shop = Shop(**shop)
 
     return shop
@@ -63,7 +61,6 @@ async def get_shops(
         shops = db_client.shops_db.find().limit(25)
         return [Shop(**shop) for shop in shops]
 
-    shop_name = shop_name.lower()
     verify_shop_name(shop_name)
     
     shop = db_client.shops_db.find_one({"name": shop_name})
@@ -85,21 +82,29 @@ async def get_shops(
 
 ## insert a shop ##
 @router.post(
-    path = "/",
+    path = "/register",
     status_code = status.HTTP_201_CREATED,
     response_model = Shop,
     tags = ["Shops"],
     summary = "Insert a shop"
 )
 async def insert_shop(
-    data: Shop = Body(...),
+    data: BaseShop = Body(...),
     current_user: User = Depends(get_current_user)
 ):
-    shop = Shop(**data.dict())
-    shop.name = data.name.lower()
-    shop.owner_username = current_user.username
+    if data.name in get_white_list_shop_names():
+        raise HTTPException(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            detail = {
+                "errmsg": "Shop's name exist"
+            }
+        )
     
-    returned_data = db_client.shops_db.insert_one(data.dict())
+    shop = Shop(**data.dict())
+    shop.owner_id = current_user.id
+    shop.name = data.name.lower()
+    
+    returned_data = db_client.shops_db.insert_one(shop.dict())
     if not returned_data.acknowledged:
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,
@@ -107,5 +112,6 @@ async def insert_shop(
                 "errmsg": "Shop not inserted"
             }
         )
-
-    return shop.dict()
+    
+    shop_to_return = db_client.shops_db.find_one({"_id": returned_data.inserted_id})
+    return Shop(**shop_to_return)

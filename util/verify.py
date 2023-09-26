@@ -63,14 +63,15 @@ def verify_product_id_in_shop(product_id: str, shop_id: str):
             }
         )
 
-def verify_owner_of_shop(shop_id: str, username: str):
+def verify_owner_of_shop(shop_id: str, user_id: str):
+    verify_shop_id(shop_id)
     shop = db_client.shops_db.find_one({"id": shop_id})
 
-    if not shop.get("owner_username") == username:
+    if not shop.get("owner_id") == user_id:
         raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED,
             detail = {
-                "errmsg": f'You are not the owner of {shop.name.capitalize()}'
+                "errmsg": f'You are not the owner of {shop["name"].capitalize()}'
             }
         )
 
