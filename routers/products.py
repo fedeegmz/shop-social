@@ -1,5 +1,5 @@
 # Python
-from bson import ObjectId
+# from bson import ObjectId
 from typing import Union
 
 # FastAPI
@@ -9,13 +9,14 @@ from fastapi import HTTPException, status
 # database
 from database.mongo_client import MongoDB
 
+# auth
+from auth.auth import get_current_user
+
 # models
-from models.user import User
-# from models.shop import Shop
+from models.user import BaseUser
 from models.product import Product, ProductDb
 
 # util
-from util.auth import get_current_user
 from util.verify import verify_shop_id, verify_product_id_in_shop, verify_owner_of_shop
 
 
@@ -79,7 +80,7 @@ async def get_product(
 async def insert_product_in_shop(
     shop_id: str = Path(...),
     data: Product = Body(...),
-    current_user: User = Depends(get_current_user)
+    current_user: BaseUser = Depends(get_current_user)
 ):
     verify_owner_of_shop(shop_id, current_user.id)
     
@@ -112,7 +113,7 @@ async def set_stock_of_product(
     shop_id: str = Path(...),
     product_id: str = Path(...),
     stock: int = Path(..., gt=0),
-    current_user: User = Depends(get_current_user)
+    current_user: BaseUser = Depends(get_current_user)
 ):
     verify_product_id_in_shop(product_id, shop_id)
     verify_owner_of_shop(shop_id, current_user.id)

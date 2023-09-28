@@ -8,11 +8,13 @@ from fastapi import HTTPException, status
 # database
 from database.mongo_client import MongoDB
 
+# auth
+from auth.auth import get_password_hash, get_current_user
+
 # models
-from models.user import User, UserDb, UserIn
+from models.user import BaseUser, User, UserDb
 
 # util
-from util.auth import get_password_hash, get_current_user
 from util.verify import verify_username, verify_user_id
 from util.white_lists import get_white_list_usernames
 
@@ -30,7 +32,7 @@ router = APIRouter(
 @router.get(
     path = "/{id}",
     status_code = status.HTTP_200_OK,
-    response_model = UserDb,
+    response_model = User,
     tags = ["Users"],
     summary = "Get a user by ID"
 )
@@ -43,7 +45,7 @@ async def get_user(
     if not user:
         return None
     
-    user = UserDb(**user)
+    user = User(**user)
 
     return user
 
@@ -52,7 +54,7 @@ async def get_user(
 @router.get(
     path = "/",
     status_code = status.HTTP_200_OK,
-    # response_model = Union[UserDb, list],
+    response_model = Union[User, list],
     tags = ["Users"],
     summary = "Get a user or users"
 )
@@ -61,7 +63,7 @@ async def get_users(
 ):
     if not username:
         users = db_client.users_db.find().limit(25)
-        users = [UserDb(**user) for user in users]
+        users = [User(**user) for user in users]
 
         return users
     
@@ -71,21 +73,21 @@ async def get_users(
     if not user:
         return None
     
-    user = UserDb(**user)
+    user = User(**user)
 
     return user
 
 
 ## get my info ##
 @router.get(
-    path = "/users/me",
+    path = "/token/me",
     status_code = status.HTTP_200_OK,
-    response_model = User,
+    response_model = BaseUser,
     tags = ["Users"],
     summary = "Get my info"
 )
 async def read_users_me(
-    current_user: User = Depends(get_current_user)
+    current_user: BaseUser = Depends(get_current_user)
 ):
     return current_user
 
@@ -94,12 +96,12 @@ async def read_users_me(
 @router.post(
     path = "/register",
     status_code = status.HTTP_201_CREATED,
-    response_model = UserDb,
+    response_model = User,
     tags = ["Users"],
     summary = "Insert a user"
 )
 async def create_user(
-    data: UserIn = Body(...)
+    data: UserDb = Body(...)
 ):  
     if data.username in get_white_list_usernames():
         raise HTTPException(
@@ -120,6 +122,37 @@ async def create_user(
         )
     
     inserted_user = db_client.users_db.find_one({"id": data.id})
-    inserted_user = UserDb(**inserted_user)
+    inserted_user = User(**inserted_user)
 
     return inserted_user
+
+
+## get my info ##
+@router.delete(
+    path = "/",
+    status_code = status.HTTP_200_OK,
+    response_model = BaseUser,
+    tags = ["Users"],
+    summary = "Delete my user info"
+)
+async def delete_user(
+    current_user: BaseUser = Depends(get_current_user)
+):
+    verify_user_id(current_user.id)
+
+    returned_data = db_client.users_db.update_one(
+        filter = {"id": current_user.id},
+        update = {"$set": {"disabled": True}}
+    )
+    if not returned_data.acknowledged:
+        raise HTTPException(
+            status_code = status.HTTP_409_CONFLICT,
+            detail = {
+                "errmsg": "User not deleted"
+            }
+        )
+    
+    deleted_user = db_client.users_db.find_one({"id": current_user.id})
+    deleted_user = BaseUser(**deleted_user)
+
+    return deleted_user

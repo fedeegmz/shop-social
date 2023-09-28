@@ -3,10 +3,9 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 # auth
-from util.auth import create_access_token, authenticate_user
+from auth.auth import create_access_token, authenticate_user
 
 # models
-from models.user import User
 from models.token import Token
 
 

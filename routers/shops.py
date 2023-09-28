@@ -8,13 +8,14 @@ from fastapi import HTTPException, status
 # database
 from database.mongo_client import MongoDB
 
+# auth
+from auth.auth import get_current_user
+
 # models
-from models.user import User
+from models.user import BaseUser
 from models.shop import BaseShop, Shop
-# from models.product import Product
 
 # util
-from util.auth import get_current_user
 from util.verify import verify_shop_name, verify_shop_id
 from util.white_lists import get_white_list_shop_names
 
@@ -90,7 +91,7 @@ async def get_shops(
 )
 async def insert_shop(
     data: BaseShop = Body(...),
-    current_user: User = Depends(get_current_user)
+    current_user: BaseUser = Depends(get_current_user)
 ):
     if data.name in get_white_list_shop_names():
         raise HTTPException(

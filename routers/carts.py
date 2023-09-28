@@ -8,16 +8,17 @@ from fastapi import HTTPException, status
 # database
 from database.mongo_client import MongoDB
 
+# auth
+from auth.auth import get_current_user
+
 # models
-from models.user import User
-# from models.shop import Shop
+from models.user import BaseUser
 from models.product import Product
 from models.cart import Cart
 from models.ticket import Ticket, TypeTicket
 
 # util
-from util.auth import get_current_user
-from util.verify import verify_shop_id, verify_product_id_in_shop, verify_cart_id
+from util.verify import verify_product_id_in_shop
 
 
 db_client = MongoDB()
@@ -36,7 +37,7 @@ router = APIRouter(
     tags = ["Carts"],
     summary = "Get my cart"
 )
-async def get_my_cart(current_user: User = Depends(get_current_user)):
+async def get_my_cart(current_user: BaseUser = Depends(get_current_user)):
     cart = db_client.carts_db.find_one({"user_id": current_user.id})
     if not cart:
         return None
@@ -54,7 +55,7 @@ async def get_my_cart(current_user: User = Depends(get_current_user)):
 async def add_product_to_cart(
     shop_id: str = Path(...),
     product_id: str = Path(...),
-    current_user: User = Depends(get_current_user)
+    current_user: BaseUser = Depends(get_current_user)
 ):
     verify_product_id_in_shop(product_id, shop_id)
 
@@ -121,7 +122,7 @@ async def add_product_to_cart(
     summary = "Buy a cart"
 )
 async def buy_cart(
-    current_user: User = Depends(get_current_user)
+    current_user: BaseUser = Depends(get_current_user)
 ):
     message = f''
     cart_to_buy = db_client.carts_db.find_one({"user_id": current_user.id})

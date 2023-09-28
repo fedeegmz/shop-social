@@ -6,7 +6,7 @@ from bson import ObjectId
 from pydantic import BaseModel, Field
 
 
-class User(BaseModel):
+class BaseUser(BaseModel):
     id: str = Field(default_factory=lambda: str(ObjectId()))
     username: str = Field(
         ...,
@@ -24,12 +24,12 @@ class User(BaseModel):
         max_length = 20
     )
 
-class UserDb(User):
+class User(BaseUser):
     disabled: bool = Field(default=False)
     created: str = Field(default=str(date.today()))
     is_superuser: bool = Field(default=False)
 
-class UserIn(UserDb):
+class UserDb(User):
     password: str = Field(
         ...,
         min_length = 8,
@@ -37,7 +37,7 @@ class UserIn(UserDb):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": str(ObjectId()),
                 "username": "ironman",

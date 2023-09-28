@@ -16,7 +16,7 @@ class Product(BaseModel):
     img: Union[str, None] = Field(default=None)
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": str(ObjectId()),
                 "name": "Arc reactor",

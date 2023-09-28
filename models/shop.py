@@ -16,7 +16,7 @@ class BaseShop(BaseModel):
     icon: Union[HttpUrl, None] = Field(default=None)
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": str(ObjectId()),
                 "name": "Stark Industries",

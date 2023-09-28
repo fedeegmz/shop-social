@@ -18,7 +18,7 @@ from jose import JWTError, jwt
 from database.mongo_client import MongoDB
 
 # models
-from models.user import UserDb, UserIn
+from models.user import User, UserDb
 from models.token import TokenData
 
 
@@ -45,12 +45,12 @@ def authenticate_user(username: str, password: str):
     user = db_client.users_db.find_one({"username": username})
     if not user:
         return False
-    user = UserIn(**user)
+    user = UserDb(**user)
     
     if not verify_password(password, user.password):
         return False
 
-    return UserDb(**user.dict())
+    return User(**user.dict())
 
 def create_access_token(data: dict, expires_delta: Union[int, None] = None):
     to_encode = data.copy()
@@ -94,7 +94,7 @@ async def get_current_user(token = Depends(oauth2_scheme)):
     )
     if not user:
         raise credentials_exception
-    user = UserDb(**user)
+    user = User(**user)
     
     if user.disabled:
         raise HTTPException(
