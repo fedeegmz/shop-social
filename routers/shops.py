@@ -56,28 +56,18 @@ async def get_shop(
     summary = "Get a shop or shops"
 )
 async def get_shops(
-    shop_name: Union[str, None] = Query(default=None)
+    name: Union[str, None] = Query(default=None)
 ):
-    if not shop_name:
+    if not name:
         shops = db_client.shops_db.find().limit(25)
         return [Shop(**shop) for shop in shops]
 
-    verify_shop_name(shop_name)
+    verify_shop_name(name)
     
-    shop = db_client.shops_db.find_one({"name": shop_name})
+    shop = db_client.shops_db.find_one({"name": name})
     if not shop:
         return None
-    # products = db_client.products_db.find(
-    #     {
-    #         "shop_name": shop_name,
-    #         "stock": {"$gt": 0}
-    #     }
-    # )
-    # products = [Product(**product).dict() for product in products]
-    # shop_to_return = shop
-    # shop_to_return["products"] = products
-    # shop_to_return = ShopAll(**shop_to_return)
-    # return shop_to_return
+    
     return Shop(**shop)
 
 
@@ -116,3 +106,39 @@ async def insert_shop(
     
     shop_to_return = db_client.shops_db.find_one({"_id": returned_data.inserted_id})
     return Shop(**shop_to_return)
+
+
+## delete a shop ##
+@router.delete(
+    path = "/{id}",
+    status_code = status.HTTP_200_OK,
+    response_model = bool,
+    tags = ["Shops"],
+    summary = "Delete my shop"
+)
+async def insert_shop(
+    id: str = Path(...),
+    current_user: BaseUser = Depends(get_current_user)
+):
+    verify_shop_id(id)
+
+    owner_shop = db_client.shops_db.find_one({"id": id}, {"owner_id": 1})
+
+    if not owner_shop["owner_id"] == current_user.id:
+        raise HTTPException(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = {
+                "errmsg": "You are not the owner of the shop"
+            }
+        )
+    
+    returned_data = db_client.shops_db.delete_one({"id": id})
+    if not returned_data.acknowledged:
+        raise HTTPException(
+            status_code = status.HTTP_409_CONFLICT,
+            detail = {
+                "errmsg": "Shop was not deleted"
+            }
+        )
+    
+    return True
