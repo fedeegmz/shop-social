@@ -111,7 +111,7 @@ async def insert_shop(
 ## delete a shop ##
 @router.delete(
     path = "/{id}",
-    status_code = status.HTTP_200_OK,
+    status_code = status.HTTP_202_ACCEPTED,
     response_model = bool,
     tags = ["Shops"],
     summary = "Delete my shop"

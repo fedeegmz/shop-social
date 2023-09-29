@@ -32,7 +32,7 @@ router = APIRouter(
 @router.get(
     path = "/{shop_id}/",
     status_code = status.HTTP_200_OK,
-    # response_model = list,
+    response_model = list,
     tags = ["Products"],
     summary = "Get products in a shop"
 )
@@ -46,7 +46,17 @@ async def get_products(
 
         return [Product(**data) for data in products]
     
-    products = db_client.products_db.find({"name": product_name})
+    products = db_client.products_db.find(
+        {"name": product_name}
+    )
+    # if len(products) == 0:
+    #     raise HTTPException(
+    #         status_code = status.HTTP_400_BAD_REQUEST,
+    #         detail = {
+    #             "errmsg": "Products not found"
+    #         }
+    #     )
+    
     return [ProductDb(**item) for item in products]
 
 
@@ -54,7 +64,7 @@ async def get_products(
 @router.get(
     path = "/{shop_id}/{product_id}",
     status_code = status.HTTP_200_OK,
-    # response_model = Product,
+    response_model = ProductDb,
     tags = ["Products"],
     summary = "Get a product in a shop"
 )
@@ -65,7 +75,7 @@ async def get_product(
     verify_product_id_in_shop(product_id, shop_id)
 
     product = db_client.products_db.find_one({"id": product_id})
-    product = Product(**product)
+    product = ProductDb(**product)
 
     return product
 
@@ -74,10 +84,11 @@ async def get_product(
 @router.post(
     path = "/register/{shop_id}",
     status_code = status.HTTP_201_CREATED,
+    response_model = ProductDb,
     tags = ["Products"],
     summary = "Insert a product in a shop"
 )
-async def insert_product_in_shop(
+async def insert_product(
     shop_id: str = Path(...),
     data: Product = Body(...),
     current_user: BaseUser = Depends(get_current_user)
@@ -106,6 +117,7 @@ async def insert_product_in_shop(
 @router.patch(
     path = "/{shop_id}/{product_id}/update-stock/{stock}",
     status_code = status.HTTP_200_OK,
+    response_model = ProductDb,
     tags = ["Products"],
     summary = "Set the stock of a product in a shop"
 )

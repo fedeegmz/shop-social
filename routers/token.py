@@ -9,7 +9,7 @@ from auth.auth import create_access_token, authenticate_user
 from models.token import Token
 
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 20
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 router = APIRouter(
     prefix = "/login",
@@ -21,6 +21,7 @@ router = APIRouter(
 
 @router.post(
     path = "/token",
+    status_code = status.HTTP_202_ACCEPTED,
     response_model = Token,
     summary = "Login a user",
     tags = ["Token"]

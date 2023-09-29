@@ -15,7 +15,7 @@ class TypeTicket(str, Enum):
 class Ticket(BaseModel):
     id: str = Field(default_factory=lambda: str(ObjectId()))
     user_id: Union[str, None] = Field(default=None)
-    release_date: date = Field(default_factory = lambda: datetime.now())
+    release_date: Union[date, str] = Field(default_factory = lambda: str(datetime.now()))
     type: TypeTicket = Field()
     items: list = Field(default_factory=lambda: [])
     price: float = Field(default=0)

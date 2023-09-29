@@ -3,20 +3,26 @@ from bson import ObjectId
 from typing import Union
 
 # Pydantic
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class Product(BaseModel):
     id: str = Field(default_factory=lambda: str(ObjectId()))
     name: str = Field(...)
-    price: float = Field(...)
-    stock: int = Field(...)
+    price: float = Field(
+        ...,
+        gt = 0
+    )
+    stock: int = Field(
+        ...,
+        gt = 0
+    )
     description: Union[str, None] = Field(default=None)
     collection: Union[str, None] = Field(default=None)
-    img: Union[str, None] = Field(default=None)
+    img: Union[HttpUrl, None] = Field(default=None)
 
     class Config:
-        json_schema_extra = {
+        schema_extra = {
             "example": {
                 "id": str(ObjectId()),
                 "name": "Arc reactor",
@@ -24,7 +30,7 @@ class Product(BaseModel):
                 "stock": 4,
                 "description": "A replica of the arc reactor",
                 "collection": "Home & Deco",
-                "img": None
+                "img": "http://example-url.com"
             }
         }
 

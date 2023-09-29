@@ -144,6 +144,13 @@ async def buy_cart(
     
     for item in cart_to_buy.products:
         product = db_client.products_db.find_one({"id": item})
+        if not product:
+            raise HTTPException(
+                status_code = status.HTTP_409_CONFLICT,
+                detail = {
+                    "errmsg": "Product in cart not found"
+                }
+            )
         product = Product(**product)
 
         if product.stock == 0:

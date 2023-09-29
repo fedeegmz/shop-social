@@ -8,10 +8,10 @@ from fastapi.testclient import TestClient
 from main import app
 
 # models
-from models.shop import BaseShop, Shop
+from models.shop import Shop
 
 # test
-from test.util import get_access_token, assert_equal_base_shop, assert_equal_shop
+from test.util import get_access_token, assert_equal_shop
 
 
 client = TestClient(app)
@@ -48,8 +48,12 @@ class TestShopsRouter:
             url = "shops/register",
             headers = authorization_param,
             json = new_shop.dict()
-        ).json()
-        inserted_shop = Shop(**response)
+        )
+
+        if response.status_code != 201:
+            assert False
+            return
+        inserted_shop = Shop(**response.json())
 
         assert_equal_shop(inserted_shop, new_shop)
     
@@ -64,8 +68,12 @@ class TestShopsRouter:
         """
         response = client.get(
             url = f'shops/{new_shop.id}'
-        ).json()
-        inserted_shop = Shop(**response)
+        )
+
+        if response.status_code != 200:
+            assert False
+            return
+        inserted_shop = Shop(**response.json())
 
         assert_equal_shop(inserted_shop, new_shop)
     
@@ -84,8 +92,12 @@ class TestShopsRouter:
         response = client.get(
             url = "shops",
             params = param
-        ).json()
-        inserted_shop = Shop(**response)
+        )
+
+        if response.status_code != 200:
+            assert False
+            return
+        inserted_shop = Shop(**response.json())
 
         assert_equal_shop(inserted_shop, new_shop)
     
@@ -107,6 +119,10 @@ class TestShopsRouter:
         response = client.delete(
             url = f'shops/{new_shop.id}',
             headers = authorization_param
-        ).json()
+        )
 
-        assert response == True
+        if response.status_code != 202:
+            assert False
+            return
+
+        assert response.json() == True

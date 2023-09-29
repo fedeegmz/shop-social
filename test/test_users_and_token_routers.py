@@ -53,6 +53,10 @@ class TestUsersAndTokenRouters:
             url = "users/register",
             json = new_user.dict()
         )
+
+        if response.status_code != 201:
+            assert False
+            return
         inserted_user = User(**response.json())
 
         assert_equal_user(inserted_user, new_user)
@@ -68,8 +72,12 @@ class TestUsersAndTokenRouters:
         """
         response = client.get(
             url = f'users/{new_user.id}'
-        ).json()
-        inserted_user = User(**response)
+        )
+
+        if response.status_code != 200:
+            assert False
+            return
+        inserted_user = User(**response.json())
 
         assert_equal_user(inserted_user, new_user)
 
@@ -88,8 +96,12 @@ class TestUsersAndTokenRouters:
         response = client.get(
             url = "users/",
             params = params
-        ).json()
-        inserted_user = User(**response)
+        )
+
+        if response.status_code != 200:
+            assert False
+            return
+        inserted_user = User(**response.json())
 
         assert_equal_user(inserted_user, new_user)
 
@@ -109,7 +121,12 @@ class TestUsersAndTokenRouters:
         response = client.post(
             url = "login/token",
             data = credentials_form
-        ).json()
+        )
+
+        if response.status_code != 202:
+            assert False
+            return
+        response = response.json()
 
         try:
             global access_token
@@ -139,8 +156,12 @@ class TestUsersAndTokenRouters:
         response = client.get(
             url = "users/token/me",
             headers = authorization_param
-        ).json()
-        inserted_user = BaseUser(**response)
+        )
+
+        if response.status_code != 200:
+            assert False
+            return
+        inserted_user = BaseUser(**response.json())
         
         assert_equal_base_user(inserted_user, new_user)
 
@@ -160,8 +181,12 @@ class TestUsersAndTokenRouters:
         response = client.delete(
             url = "users",
             headers = authorization_param
-        ).json()
-        deleted_user = BaseUser(**response)
+        )
+
+        if response.status_code != 202:
+            assert False
+            return
+        deleted_user = BaseUser(**response.json())
 
         assert_equal_base_user(deleted_user, new_user)
 

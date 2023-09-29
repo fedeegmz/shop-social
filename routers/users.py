@@ -130,7 +130,7 @@ async def create_user(
 ## get my info ##
 @router.delete(
     path = "/",
-    status_code = status.HTTP_200_OK,
+    status_code = status.HTTP_202_ACCEPTED,
     response_model = BaseUser,
     tags = ["Users"],
     summary = "Delete my user info"
