@@ -87,6 +87,23 @@ class TestProductsRouter:
 
         assert_equal_productdb(inserted_product, new_product)
 
+    def test_get_product_by_invalid_id(self):
+        """
+        Verifica que no se retorna un producto.  
+        - Test: routers > products.py > get_product()
+        - Path: products/{shop_id}/{product_id}
+        - Method: GET
+        - Path param:
+            - shop_id: <shop's ID>
+            - product_id: <product's ID>
+        """
+        response = client.get(
+            url = f'products/{new_product.shop_id}/{new_product.id}{randint(100, 999)}',
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"]["errmsg"] == "Incorrect product"
+
     def test_get_product_by_valid_name(self):
         """
         Verifica que el producto es el correcto.  
@@ -114,7 +131,29 @@ class TestProductsRouter:
             product = ProductDb(**item)
             assert product.name == new_product.name.lower()
 
-    def test_get_less_than_25_products(self):
+    def test_get_product_by_valid_name(self):
+        """
+        Verifica que no se retorna un producto.  
+        - Test: routers > products.py > get_products()
+        - Path: products/{shop_id}/
+        - Method: GET
+        - Path param:
+            - shop_id: <shop's ID>
+        - Query param:
+            - product_name: <product's name>
+        """
+        param = {
+            "product_name": f'{new_product.name.lower()}{randint(100, 999)}'
+        }
+        response = client.get(
+            url = f'products/{new_product.shop_id}/',
+            params = param
+        )
+
+        assert response.status_code == 200
+        assert len(response.json()) == 0
+
+    def test_get_less_or_equal_than_25_products(self):
         """
         Verifica que el endpoint no retorna mas de 25 productos.  
         - Test: routers > products.py > get_products()
@@ -132,6 +171,7 @@ class TestProductsRouter:
             return
         
         assert len(response.json()) <= 25
+        assert len(response.json()) >= 0
     
     def test_update_valid_stock_of_product(self):
         """

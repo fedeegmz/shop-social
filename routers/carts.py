@@ -29,7 +29,7 @@ router = APIRouter(
 
 ### PATH OPERATIONS ###
 
-## get a cart by ID ##
+## get my cart ##
 @router.get(
     path = "/my",
     status_code = status.HTTP_200_OK,

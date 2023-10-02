@@ -28,6 +28,26 @@ router = APIRouter(
 
 ### PATH OPERATIONS ###
 
+## get product ##
+@router.get(
+    path = "/{shop_id}/{product_id}",
+    status_code = status.HTTP_200_OK,
+    response_model = ProductDb,
+    tags = ["Products"],
+    summary = "Get a product in a shop"
+)
+async def get_product(
+    shop_id: str = Path(...),
+    product_id: str = Path(...)
+):
+    verify_product_id_in_shop(product_id, shop_id)
+
+    product = db_client.products_db.find_one({"id": product_id})
+    product = ProductDb(**product)
+
+    return product
+
+
 ## get products ##
 @router.get(
     path = "/{shop_id}/",
@@ -58,26 +78,6 @@ async def get_products(
     #     )
     
     return [ProductDb(**item) for item in products]
-
-
-## get product ##
-@router.get(
-    path = "/{shop_id}/{product_id}",
-    status_code = status.HTTP_200_OK,
-    response_model = ProductDb,
-    tags = ["Products"],
-    summary = "Get a product in a shop"
-)
-async def get_product(
-    shop_id: str = Path(...),
-    product_id: str = Path(...)
-):
-    verify_product_id_in_shop(product_id, shop_id)
-
-    product = db_client.products_db.find_one({"id": product_id})
-    product = ProductDb(**product)
-
-    return product
 
 
 ## insert product ##

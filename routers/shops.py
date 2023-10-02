@@ -83,7 +83,7 @@ async def insert_shop(
     data: BaseShop = Body(...),
     current_user: BaseUser = Depends(get_current_user)
 ):
-    if data.name in get_white_list_shop_names():
+    if data.name.lower() in get_white_list_shop_names():
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,
             detail = {
@@ -116,7 +116,7 @@ async def insert_shop(
     tags = ["Shops"],
     summary = "Delete my shop"
 )
-async def insert_shop(
+async def delete_shop(
     id: str = Path(...),
     current_user: BaseUser = Depends(get_current_user)
 ):
@@ -132,6 +132,8 @@ async def insert_shop(
             }
         )
     
+    ### TODO: eliminar los productos asociados a la tienda
+
     returned_data = db_client.shops_db.delete_one({"id": id})
     if not returned_data.acknowledged:
         raise HTTPException(

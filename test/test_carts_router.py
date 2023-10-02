@@ -63,6 +63,29 @@ class TestCartsRouter:
         if not found:
             assert False
     
+    def test_add_invalid_product(self):
+        """
+        Verifica que no se agrega el producto al carrito.   
+        - Test: routers > carts.py > add_product_to_cart()
+        - Path: carts/{shop_id}/{product_id}/add-to-cart
+        - Method: POST
+        - Path param:
+            - shop_id: <shop's ID>
+            - product_id: <product's ID>
+        - Header param:
+            - Authorization: Bearer <access_token>
+        """
+        authorization_param = {
+            "Authorization": f'Bearer {get_access_token()}'
+        }
+        response = client.post(
+            url = f'carts/{new_product.shop_id}/{new_product.id}{randint(100, 999)}/add-to-cart',
+            headers = authorization_param
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"]["errmsg"] == "Incorrect product"
+
     def test_get_my_cart(self):
         """
         Verifica que el endpoint retorna el carrito correcto.  
@@ -86,6 +109,26 @@ class TestCartsRouter:
         returned_cart = Cart(**response.json())
 
         assert returned_cart.user_id == "6515ba03cab17aef182c8a0a"
+
+    def test_get_my_cart_with_invalid_access_token(self):
+        """
+        Verifica que el endpoint no retorna un carrito.  
+        - Test: routers > carts.py > get_my_cart()
+        - Path: carts/my
+        - Method: GET
+        - Header param:
+            - Authorization: Bearer <access_token>
+        """
+        authorization_param = {
+            "Authorization": f'Bearer {get_access_token()}{randint(100, 999)}'
+        }
+        response = client.get(
+            url = "carts/my",
+            headers = authorization_param
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"]["errmsg"] == "Could not validate credentials"
 
     def test_buy_my_cart(self):
         """
