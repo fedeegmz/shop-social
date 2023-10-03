@@ -3,7 +3,7 @@ from bson import ObjectId
 from typing import Union
 
 # Pydantic
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 # models
 from models.product import Product
@@ -13,10 +13,10 @@ class BaseShop(BaseModel):
     id: str = Field(default_factory=lambda: str(ObjectId()))
     name: str = Field(default_factory=lambda x: str(x).lower())
     description: Union[str, None] = Field(default=None)
-    icon: Union[HttpUrl, None] = Field(default=None)
+    icon: Union[str, None] = Field(default=None)
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": str(ObjectId()),
                 "name": "Stark Industries",

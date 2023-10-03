@@ -47,7 +47,7 @@ class TestShopsRouter:
         response = client.post(
             url = "shops/register",
             headers = authorization_param,
-            json = new_shop.dict()
+            json = new_shop.model_dump()
         )
 
         if response.status_code != 201:
@@ -75,7 +75,7 @@ class TestShopsRouter:
         response = client.post(
             url = "shops/register",
             headers = authorization_param,
-            json = new_shop.dict()
+            json = new_shop.model_dump()
         )
 
         assert response.status_code == 400

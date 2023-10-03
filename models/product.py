@@ -3,7 +3,7 @@ from bson import ObjectId
 from typing import Union
 
 # Pydantic
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 
 class Product(BaseModel):
@@ -19,10 +19,10 @@ class Product(BaseModel):
     )
     description: Union[str, None] = Field(default=None)
     collection: Union[str, None] = Field(default=None)
-    img: Union[HttpUrl, None] = Field(default=None)
+    img: Union[str, None] = Field(default=None)
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": str(ObjectId()),
                 "name": "Arc reactor",

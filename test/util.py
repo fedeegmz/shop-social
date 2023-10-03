@@ -1,5 +1,4 @@
 # Python
-import os
 from random import randint
 
 # FastAPI
@@ -7,6 +6,9 @@ from fastapi.testclient import TestClient
 
 # app
 from main import app
+
+# security
+from security.config import settings
 
 # database
 from database.mongo_client import MongoDB
@@ -24,7 +26,7 @@ db_client = MongoDB()
 def get_access_token():
     credentials_form = {
         "username": "testuser+27364",
-        "password": os.getenv("PASSWORD_FOR_TESTING")
+        "password": settings.password_for_testing
     }
     response = client.post(
         url = "login/token",
@@ -40,7 +42,7 @@ def insert_product():
     product = Product(
         name = f'Test product {str(randint(1000, 9999))}',
         price = randint(0, 200),
-        stock = randint(0, 10),
+        stock = randint(1, 10),
         description = "This a test description",
         collection = "Home & Deco",
         img = "http://example-url.com"
@@ -48,7 +50,7 @@ def insert_product():
     response = client.post(
         url = f'products/register/{"65133250769b9799befb1630"}',
         headers = authorization_param,
-        json = product.dict()
+        json = product.model_dump()
     )
 
     if response.status_code == 201:

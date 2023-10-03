@@ -37,7 +37,7 @@ class UserDb(User):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": str(ObjectId()),
                 "username": "ironman",

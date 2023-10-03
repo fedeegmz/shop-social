@@ -1,5 +1,4 @@
 # Python
-import os
 from datetime import datetime, timedelta
 from typing import Union
 
@@ -14,6 +13,9 @@ from passlib.context import CryptContext
 # JWT
 from jose import JWTError, jwt
 
+# security
+from security.config import settings
+
 # db
 from database.mongo_client import MongoDB
 
@@ -22,7 +24,7 @@ from models.user import User, UserDb
 from models.token import TokenData
 
 
-JWT_SECRETKEY = os.getenv("JWT_SECRETKEY")
+JWT_SECRETKEY = settings.jwt_secretkey
 ALGORITHM = "HS256"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -50,7 +52,7 @@ def authenticate_user(username: str, password: str):
     if not verify_password(password, user.password):
         return False
 
-    return User(**user.dict())
+    return User(**user.model_dump())
 
 def create_access_token(data: dict, expires_delta: Union[int, None] = None):
     to_encode = data.copy()

@@ -56,7 +56,7 @@ class TestProductsRouter:
         response = client.post(
             url = f'products/register/{"65133250769b9799befb1630"}',
             headers = authorization_param,
-            json = new_product.dict()
+            json = new_product.model_dump()
         )
 
         if response.status_code != 201:

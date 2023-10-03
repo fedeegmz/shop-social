@@ -1,5 +1,4 @@
 # Python
-import os
 from random import randint
 
 # FastAPI
@@ -10,6 +9,9 @@ from jose import jwt
 
 # app
 from main import app
+
+# security
+from security.config import settings
 
 # database
 from database.mongo_client import MongoDB
@@ -23,7 +25,7 @@ from test.util import assert_equal_base_user, assert_equal_user
 
 client = TestClient(app)
 db_client = MongoDB()
-JWT_SECRETKEY = os.getenv("JWT_SECRETKEY")
+JWT_SECRETKEY = settings.jwt_secretkey
 ALGORITHM = "HS256"
 
 new_user: UserDb = UserDb(
@@ -51,7 +53,7 @@ class TestUsersAndTokenRouters:
         """
         response = client.post(
             url = "users/register",
-            json = new_user.dict()
+            json = new_user.model_dump()
         )
 
         if response.status_code != 201:
@@ -72,7 +74,7 @@ class TestUsersAndTokenRouters:
         """
         response = client.post(
             url = "users/register",
-            json = new_user.dict()
+            json = new_user.model_dump()
         )
 
         assert response.status_code == 409

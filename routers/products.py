@@ -9,8 +9,8 @@ from fastapi import HTTPException, status
 # database
 from database.mongo_client import MongoDB
 
-# auth
-from auth.auth import get_current_user
+# security
+from security.auth import get_current_user
 
 # models
 from models.user import BaseUser
@@ -95,10 +95,10 @@ async def insert_product(
 ):
     verify_owner_of_shop(shop_id, current_user.id)
     
-    product = ProductDb(**data.dict())
+    product = ProductDb(**data.model_dump())
     product.shop_id = shop_id
 
-    returned_data = db_client.products_db.insert_one(product.dict())
+    returned_data = db_client.products_db.insert_one(product.model_dump())
     if not returned_data.acknowledged:
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,

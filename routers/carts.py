@@ -8,8 +8,8 @@ from fastapi import HTTPException, status
 # database
 from database.mongo_client import MongoDB
 
-# auth
-from auth.auth import get_current_user
+# security
+from security.auth import get_current_user
 
 # models
 from models.user import BaseUser
@@ -99,7 +99,7 @@ async def add_product_to_cart(
     
     returned_cart_data = db_client.carts_db.replace_one(
         filter = {"id": cart.id},
-        replacement = cart.dict(),
+        replacement = cart.model_dump(),
         upsert = True
     )
     if not returned_cart_data.acknowledged:
@@ -176,7 +176,7 @@ async def buy_cart(
         ticket.items.append(product)
         ticket.price += product.price
 
-    returned_ticket_data = db_client.tickets_db.insert_one(ticket.dict())
+    returned_ticket_data = db_client.tickets_db.insert_one(ticket.model_dump())
     if not returned_ticket_data:
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,

@@ -4,12 +4,13 @@ from typing import Union
 # FastAPI
 from fastapi import APIRouter, Path, Query, Body, Depends
 from fastapi import HTTPException, status
+from fastapi_limiter.depends import RateLimiter
 
 # database
 from database.mongo_client import MongoDB
 
-# auth
-from auth.auth import get_password_hash, get_current_user
+# security
+from security.auth import get_password_hash, get_current_user
 
 # models
 from models.user import BaseUser, User, UserDb
@@ -22,7 +23,10 @@ from util.white_lists import get_white_list_usernames
 db_client = MongoDB()
 
 router = APIRouter(
-    prefix = "/users"
+    prefix = "/users",
+    # dependencies = [
+    #     Depends(RateLimiter(times=2, seconds=5))
+    # ]
 )
 
 
@@ -112,7 +116,7 @@ async def create_user(
         )
     
     data.password = get_password_hash(data.password)
-    returned_data = db_client.users_db.insert_one(data.dict())
+    returned_data = db_client.users_db.insert_one(data.model_dump())
     if not returned_data.acknowledged:
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,
